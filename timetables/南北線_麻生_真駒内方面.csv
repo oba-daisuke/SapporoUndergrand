@@ -1,5 +1,4 @@
 ﻿line,station,direction,day_type,time,dest,remark
-南北線,麻生,真駒内方面,weekday,00:00,真駒内行き,
 南北線,麻生,真駒内方面,weekday,06:00,真駒内行き,
 南北線,麻生,真駒内方面,weekday,06:10,真駒内行き,
 南北線,麻生,真駒内方面,weekday,06:20,真駒内行き,
@@ -170,7 +169,7 @@
 南北線,麻生,真駒内方面,weekday,23:35,真駒内行き,
 南北線,麻生,真駒内方面,weekday,23:43,真駒内行き,
 南北線,麻生,真駒内方面,weekday,23:51,真駒内行き,
-南北線,麻生,真駒内方面,weekend_holiday,00:00,真駒内行き,
+南北線,麻生,真駒内方面,weekday,00:00,真駒内行き,
 南北線,麻生,真駒内方面,weekend_holiday,06:00,真駒内行き,
 南北線,麻生,真駒内方面,weekend_holiday,06:10,真駒内行き,
 南北線,麻生,真駒内方面,weekend_holiday,06:20,真駒内行き,
@@ -321,3 +320,4 @@
 南北線,麻生,真駒内方面,weekend_holiday,23:35,真駒内行き,
 南北線,麻生,真駒内方面,weekend_holiday,23:43,真駒内行き,
 南北線,麻生,真駒内方面,weekend_holiday,23:51,真駒内行き,
+南北線,麻生,真駒内方面,weekend_holiday,00:00,真駒内行き,
