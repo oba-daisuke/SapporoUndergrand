@@ -177,8 +177,6 @@ if day_type == "auto":
 
 n_trains = st.sidebar.slider("表示する本数", 1, 5, 2)
 
-st.title("地下鉄 到着案内")
-
 # CSV一覧を読み、駅・路線・方面の候補を出す
 files = list_csv_files()
 if not files:
