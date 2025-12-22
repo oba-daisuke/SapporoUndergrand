@@ -2,7 +2,7 @@ import os
 import glob
 import streamlit as st
 import pandas as pd
-from datetime import datetime, date, time as dtime
+from datetime import datetime, date, time as dtime, timedelta
 from zoneinfo import ZoneInfo
 
 st.set_page_config(page_title="地下鉄 到着案内", layout="wide")
@@ -79,8 +79,8 @@ def parse_filename(path: str):
 
 
 def next_trains(df: pd.DataFrame, now: datetime, n=3) -> pd.DataFrame:
-    """now以降の次列車n本を返す。"""
-    base_date = now.date()
+    """now以降の次列車n本を返す。1時以降は翌日の0時台も表示。"""
+    base_date = (now + timedelta(days=1)).date() if now.hour >= 1 else now.date()
     tmp = df.copy()
     tmp["dt"] = tmp["time"].apply(lambda x: parse_hhmm_to_dt(x, base_date))
 
@@ -161,8 +161,9 @@ st.sidebar.write("現在時刻")
 st.sidebar.markdown(f"**{now.strftime('%Y-%m-%d %H:%M:%S')}**")
 
 # day_type auto
-auto_day_type = "weekend_holiday" if is_weekend_or_holiday(now.date()) else "weekday"
-st.sidebar.write("本日のダイヤ判定")
+effective_date = (now + timedelta(days=1)).date() if now.hour >= 1 else now.date()
+auto_day_type = "weekend_holiday" if is_weekend_or_holiday(effective_date) else "weekday"
+st.sidebar.write("適用ダイヤ判定")
 st.sidebar.markdown(f"**{'土日祝' if auto_day_type=='weekend_holiday' else '平日'}**")
 
 # たまに手動で切り替えたい人向け
