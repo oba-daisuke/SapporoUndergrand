@@ -79,11 +79,22 @@ def parse_filename(path: str):
 
 
 def next_trains(df: pd.DataFrame, now: datetime, n=3) -> pd.DataFrame:
-    """now以降の次列車n本を返す。1時以降は翌日の0時台も表示。"""
-    base_date = (now + timedelta(days=1)).date() if now.hour >= 1 else now.date()
+    """now以降の次列車n本を返す。当日と翌日の日付をまたがって正しく処理。"""
     tmp = df.copy()
-    tmp["dt"] = tmp["time"].apply(lambda x: parse_hhmm_to_dt(x, base_date))
-
+    
+    # 当日と翌日の両方の日付でdatetime列を作る
+    today = now.date()
+    tomorrow = (now + timedelta(days=1)).date()
+    
+    tmp["dt_today"] = tmp["time"].apply(lambda x: parse_hhmm_to_dt(x, today))
+    tmp["dt_tomorrow"] = tmp["time"].apply(lambda x: parse_hhmm_to_dt(x, tomorrow))
+    
+    # 当日の時刻がnow以降なら当日、そうでなければ翌日を使う
+    tmp["dt"] = tmp.apply(
+        lambda row: row["dt_today"] if row["dt_today"] >= now else row["dt_tomorrow"],
+        axis=1
+    )
+    
     future = tmp[tmp["dt"] >= now].sort_values("dt").head(n)
     if future.empty:
         return future
