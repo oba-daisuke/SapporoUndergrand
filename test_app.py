@@ -251,7 +251,7 @@ class TestDayTypeTransition:
         result = next_trains(
             timetable_with_day_types[timetable_with_day_types["day_type"] == "weekend_holiday"],
             friday_night,
-            n=3
+            n=5
         )
         
         # 土日ダイヤを使うと、23:30後は翌日のダイヤ（06:00）が表示される
@@ -261,24 +261,42 @@ class TestDayTypeTransition:
     
     def test_日曜深夜は翌月曜平日ダイヤが適用される(self, timetable_with_day_types):
         """
-        日曜深夜23:50は、平日ダイヤで翌朝の始発が表示される
-        実装上、時刻表データの day_type が当日のものを選択するため、
-        日曜に平日ダイヤで検索した場合、当日の 23:50 が表示される
+        日曜深夜0:00～4:59は、翌月曜朝の平日ダイヤが適用される
+        2026-01-18 は日曜, 2026-01-19 は月曜（平日）
+        深夜2時に検索すると翌日（月曜）の平日ダイヤで検索される
         """
-        # 日曜23:50
-        sunday_night = datetime(2026, 1, 18, 23, 50, 0, tzinfo=JST)
+        # 日曜深夜2:00
+        sunday_midnight = datetime(2026, 1, 18, 2, 0, 0, tzinfo=JST)
         
         result = next_trains(
             timetable_with_day_types[timetable_with_day_types["day_type"] == "weekday"],
-            sunday_night,
-            n=2
+            sunday_midnight,
+            n=5
         )
         
-        # 平日ダイヤデータでは、当日の 23:50 または翌朝の時刻が表示される
+        # 深夜2:00は翌日（月曜・平日）のダイヤを使うため、翌朝の平日始発が表示される
         if not result.empty:
             times = result["time"].values
-            # 23:50 または翌朝のいずれかが含まれる
-            assert any(t in times for t in ["23:50", "05:30", "06:00"])
+            # 月曜朝の始発（05:30）が含まれる
+            assert "05:30" in times
+    
+    def test_日曜夜間は当日日曜ダイヤが適用される(self, timetable_with_day_types):
+        """
+        日曜21:39のように営業時間中は当日（日曜）のダイヤが適用される
+        """
+        # 日曜21:39
+        sunday_evening = datetime(2026, 1, 18, 21, 39, 0, tzinfo=JST)
+        
+        result = next_trains(
+            timetable_with_day_types[timetable_with_day_types["day_type"] == "weekend_holiday"],
+            sunday_evening,
+            n=3
+        )
+        
+        # 夜間は当日（日曜）のダイヤを使うため、土日ダイヤの23:30が表示される
+        if not result.empty:
+            times = result["time"].values
+            assert "23:30" in times
 
 
 class TestHolidayDiagram:

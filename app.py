@@ -172,7 +172,12 @@ st.sidebar.write("現在時刻")
 st.sidebar.markdown(f"**{now.strftime('%Y-%m-%d %H:%M:%S')}**")
 
 # day_type auto
-effective_date = (now + timedelta(days=1)).date() if now.hour >= 1 else now.date()
+# 営業時間中（朝5時～深夜23時59分）は当日のダイヤを使う。
+# 深夜（0時～朝4時59分）は翌日のダイヤを使う。
+if 0 <= now.hour < 5:
+    effective_date = (now + timedelta(days=1)).date()
+else:
+    effective_date = now.date()
 auto_day_type = "weekend_holiday" if is_weekend_or_holiday(effective_date) else "weekday"
 st.sidebar.write("適用ダイヤ判定")
 st.sidebar.markdown(f"**{'土日祝' if auto_day_type=='weekend_holiday' else '平日'}**")
