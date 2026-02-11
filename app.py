@@ -210,36 +210,56 @@ for p in files:
 meta_df = pd.DataFrame(meta)
 
 # 南北線の場合、デフォルトでさっぽろ→麻生方面 と 麻生→真駒内方面 を横に並べて表示
-if "南北線" in meta_df["line"].values:
-    nankoku_meta = meta_df[meta_df["line"] == "南北線"]
-    sapporo_asahikawa = nankoku_meta[(nankoku_meta["station"] == "さっぽろ") & (nankoku_meta["direction"] == "麻生方面")]
-    asahikawa_makomanai = nankoku_meta[(nankoku_meta["station"] == "麻生") & (nankoku_meta["direction"] == "真駒内方面")]
+# 南北線の駅順序（表示順用）
+STATION_ORDER = [
+    "麻生", "北34条", "北24条", "北18条", "北12条", "さっぽろ", "大通", "すすきの",
+    "中島公園", "幌平橋", "中の島", "平岸", "南平岸", "澄川", "自衛隊前", "真駒内"
+]
+
+def get_station_order(station_name):
+    if station_name in STATION_ORDER:
+        return STATION_ORDER.index(station_name)
+    return 999
+
+# meta_df にソート用カラム追加
+meta_df["sort_key"] = meta_df["station"].apply(get_station_order)
+meta_df = meta_df.sort_values("sort_key")
+
+# 駅ごとにグループ化して表示
+# ユニークな駅リストを取得（ソート済み）
+unique_stations = meta_df["station"].unique()
+
+for station in unique_stations:
+    # フィルタリングロジック
+    # 麻生駅 -> 真駒内方面のみ表示
+    # それ以外 -> 麻生方面のみ表示
     
-    if not sapporo_asahikawa.empty and not asahikawa_makomanai.empty:
-        col1, col2 = st.columns(2)
+    target_direction = None
+    if station == "麻生":
+        target_direction = "真駒内方面"
+    else:
+        target_direction = "麻生方面"
+
+    # この駅・方面のデータを取得
+    target_row = meta_df[(meta_df["station"] == station) & (meta_df["direction"] == target_direction)]
+    
+    if not target_row.empty:
+        # 駅名ヘッダーを表示（データがある場合のみ）
+        st.markdown(f"## {station}")
         
-        # さっぽろ→麻生方面
-        with col1:
-            path1 = sapporo_asahikawa.iloc[0]["path"]
-            try:
-                df1_all = load_timetable_csv(path1)
-                df1 = df1_all[df1_all["day_type"] == day_type].copy()
-                if not df1.empty:
-                    title1 = f"南北線 / さっぽろ / 麻生方面（{'土日祝' if day_type=='weekend_holiday' else '平日'}）"
-                    nxt1 = next_trains(df1, now, n=n_trains)
-                    big_card(title1, nxt1)
-            except Exception as e:
-                st.error(f"CSV読み込み失敗: {e}")
+        row = target_row.iloc[0]
+        try:
+            df = load_timetable_csv(row["path"])
+            df_day = df[df["day_type"] == day_type].copy()
+            
+            if not df_day.empty:
+                title = f"{target_direction}（{'土日祝' if day_type=='weekend_holiday' else '平日'}）"
+                nxt = next_trains(df_day, now, n=n_trains)
+                big_card(title, nxt)
+            else:
+                st.info("該当するダイヤがありません")
+        except Exception as e:
+            st.error(f"読み込みエラー: {e}")
         
-        # 麻生→真駒内方面
-        with col2:
-            path2 = asahikawa_makomanai.iloc[0]["path"]
-            try:
-                df2_all = load_timetable_csv(path2)
-                df2 = df2_all[df2_all["day_type"] == day_type].copy()
-                if not df2.empty:
-                    title2 = f"南北線 / 麻生 / 真駒内方面（{'土日祝' if day_type=='weekend_holiday' else '平日'}）"
-                    nxt2 = next_trains(df2, now, n=n_trains)
-                    big_card(title2, nxt2)
-            except Exception as e:
-                st.error(f"CSV読み込み失敗: {e}")
+        st.markdown("---")
+
